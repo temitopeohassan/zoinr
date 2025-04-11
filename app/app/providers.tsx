@@ -6,13 +6,12 @@ import { base, baseSepolia } from 'wagmi/chains';
 import { type ReactNode, useState } from 'react';
 import { type State, WagmiProvider } from 'wagmi';
  
-import { getConfig } from './wagmi'; // your import path may vary
+import { config } from './wagmi';
  
 export function Providers(props: {
   children: ReactNode;
   initialState?: State;
 }) {
-  const [config] = useState(() => getConfig());
   const [queryClient] = useState(() => new QueryClient());
  
   return (
