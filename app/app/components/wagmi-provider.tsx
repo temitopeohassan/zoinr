@@ -2,7 +2,7 @@
 
 import { ReactNode } from 'react';
 import { cookieToInitialState } from 'wagmi';
-import { getConfig } from '../wagmi';
+import { config } from '../wagmi';
 import { Providers } from '../providers';
 
 export function WagmiProvider({ 
@@ -13,7 +13,7 @@ export function WagmiProvider({
   cookie: string | null;
 }) {
   const initialState = cookieToInitialState(
-    getConfig(),
+    config,
     cookie
   );
 

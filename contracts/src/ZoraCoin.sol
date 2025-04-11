@@ -8,31 +8,32 @@ import "@openzeppelin/contracts/utils/Strings.sol";
 /**
  * @title ZoraCoin
  * @dev ERC20 token with metadata URI support and mint/burn capabilities
+ * Compatible with Zora SDK and viem clients
  */
 contract ZoraCoin is ERC20, Ownable {
     string private _metadataUri;
-    uint256 private _totalSupply;
+    address public payoutRecipient;
+    address public platformReferrer;
+    uint256 public initialPurchaseWei;
 
     event MetadataURIUpdated(string newURI);
     event TokensBurned(address indexed burner, uint256 amount);
+    event PayoutRecipientUpdated(address indexed newRecipient);
+    event PlatformReferrerUpdated(address indexed newReferrer);
 
     constructor(
         string memory name,
         string memory symbol,
-        address owner,
         string memory metadataUri,
-        address[] memory initialReceivers,
-        uint256[] memory initialAmounts
+        address _payoutRecipient,
+        address _platformReferrer,
+        uint256 _initialPurchaseWei
     ) ERC20(name, symbol) {
         _metadataUri = metadataUri;
-        _transferOwnership(owner);
-
-        require(initialReceivers.length == initialAmounts.length, "Arrays length mismatch");
-        
-        for (uint256 i = 0; i < initialReceivers.length; i++) {
-            _mint(initialReceivers[i], initialAmounts[i]);
-            _totalSupply += initialAmounts[i];
-        }
+        payoutRecipient = _payoutRecipient;
+        platformReferrer = _platformReferrer;
+        initialPurchaseWei = _initialPurchaseWei;
+        _transferOwnership(_payoutRecipient);
     }
 
     /**
@@ -52,10 +53,22 @@ contract ZoraCoin is ERC20, Ownable {
     }
 
     /**
-     * @dev Returns the total supply of tokens
+     * @dev Updates the payout recipient address
+     * @param newRecipient The new payout recipient address
      */
-    function totalSupply() public view override returns (uint256) {
-        return _totalSupply;
+    function updatePayoutRecipient(address newRecipient) public onlyOwner {
+        require(newRecipient != address(0), "Invalid recipient address");
+        payoutRecipient = newRecipient;
+        emit PayoutRecipientUpdated(newRecipient);
+    }
+
+    /**
+     * @dev Updates the platform referrer address
+     * @param newReferrer The new platform referrer address
+     */
+    function updatePlatformReferrer(address newReferrer) public onlyOwner {
+        platformReferrer = newReferrer;
+        emit PlatformReferrerUpdated(newReferrer);
     }
 
     /**
@@ -65,7 +78,6 @@ contract ZoraCoin is ERC20, Ownable {
      */
     function mint(address to, uint256 amount) public onlyOwner {
         _mint(to, amount);
-        _totalSupply += amount;
     }
 
     /**
@@ -74,7 +86,6 @@ contract ZoraCoin is ERC20, Ownable {
      */
     function burn(uint256 amount) public {
         _burn(msg.sender, amount);
-        _totalSupply -= amount;
         emit TokensBurned(msg.sender, amount);
     }
 }
@@ -95,27 +106,27 @@ contract ZoraCoinFactory {
      * @dev Creates a new ZoraCoin token
      * @param name The name of the token
      * @param symbol The symbol of the token
-     * @param owner The address that will own the token
      * @param metadataUri The URI pointing to the token's metadata
-     * @param initialReceivers Array of addresses to receive initial tokens
-     * @param initialAmounts Array of amounts to mint to each receiver
+     * @param payoutRecipient The address that will receive payouts
+     * @param platformReferrer The optional platform referrer address
+     * @param initialPurchaseWei The initial purchase amount in Wei
      * @return The address of the newly created token
      */
     function createCoin(
         string memory name,
         string memory symbol,
-        address owner,
         string memory metadataUri,
-        address[] memory initialReceivers,
-        uint256[] memory initialAmounts
+        address payoutRecipient,
+        address platformReferrer,
+        uint256 initialPurchaseWei
     ) public returns (address) {
         ZoraCoin newCoin = new ZoraCoin(
             name,
             symbol,
-            owner,
             metadataUri,
-            initialReceivers,
-            initialAmounts
+            payoutRecipient,
+            platformReferrer,
+            initialPurchaseWei
         );
 
         emit CoinCreated(msg.sender, address(newCoin), name, symbol);
