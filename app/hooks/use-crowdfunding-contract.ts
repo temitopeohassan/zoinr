@@ -12,15 +12,9 @@ const contractConfig = {
 } as const;
 
 export function useCrowdfundingContract() {
-  const { writeContract: createCampaignFn } = useContractWrite({
-    ...contractConfig,
-    functionName: 'createCampaign',
-  });
+  const { writeContract: createCampaignFn } = useContractWrite();
 
-  const { writeContract: donateFn } = useContractWrite({
-    ...contractConfig,
-    functionName: 'donate',
-  });
+  const { writeContract: donateFn } = useContractWrite();
 
   const { data: campaignData } = useContractRead({
     ...contractConfig,
@@ -35,6 +29,7 @@ export function useCrowdfundingContract() {
   ) => {
     return createCampaignFn({
       ...contractConfig,
+      functionName: 'createCampaign',
       args: [title, description, goal, BigInt(durationInDays)],
     });
   };
@@ -42,6 +37,7 @@ export function useCrowdfundingContract() {
   const donate = async (campaignId: number, amount: bigint) => {
     return donateFn({
       ...contractConfig,
+      functionName: 'donate',
       args: [BigInt(campaignId)],
       value: amount,
     });
